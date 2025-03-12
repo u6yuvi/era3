@@ -2,13 +2,14 @@ import numpy as np
 np.set_printoptions(precision=8, suppress=True)  # For cleaner debug output
 
 class GridWorld:
-    def __init__(self, size=4):
+    def __init__(self, size=4, verbose=False):
         self.size = size
         self.n_states = size * size
         self.actions = ['up', 'down', 'left', 'right']
         self.gamma = 1.0  # discount factor
         self.theta = 1e-4  # convergence threshold
         self.action_prob = 0.25  # equal probability for each action
+        self.verbose = verbose  # flag to control debug output
         
         # Initialize value function
         self.V = np.zeros(self.n_states)
@@ -56,17 +57,20 @@ class GridWorld:
                 
                 # Calculate expected value over all actions (equal probability)
                 expected_value = 0
-                print(f"\nState {state} (row={state//self.size}, col={state%self.size}):")
+                if self.verbose:
+                    print(f"\nState {state} (row={state//self.size}, col={state%self.size}):")
                 
                 for action in self.actions:
                     next_state = self.get_next_state(state, action)
                     value_contribution = self.action_prob * (self.get_reward(state) + self.gamma * V_new[next_state])
                     expected_value += value_contribution
-                    print(f"  Action {action}: next_state={next_state}, reward={self.get_reward(state)}, "
-                          f"contribution={value_contribution:.4f}")
+                    if self.verbose:
+                        print(f"  Action {action}: next_state={next_state}, reward={self.get_reward(state)}, "
+                              f"contribution={value_contribution:.4f}")
                 
                 V_new[state] = expected_value
-                print(f"  Final value for state {state}: {V_new[state]:.4f}")
+                if self.verbose:
+                    print(f"  Final value for state {state}: {V_new[state]:.4f}")
                 
                 # Track maximum change
                 delta = max(delta, abs(V_new[state] - self.V[state]))
@@ -75,10 +79,11 @@ class GridWorld:
             self.V = V_new
             iteration += 1
             
-            print(f"\nIteration {iteration}:")
-            print("Current Value Function:")
-            print_value_grid(self.V, self.size)
-            print(f"Max change (delta): {delta:.6f}")
+            if self.verbose:
+                print(f"\nIteration {iteration}:")
+                print("Current Value Function:")
+                print_value_grid(self.V, self.size)
+                print(f"Max change (delta): {delta:.6f}")
             
             # Check for convergence
             if delta < self.theta:
@@ -93,7 +98,7 @@ def print_value_grid(V, size):
 
 if __name__ == "__main__":
     # Create and solve GridWorld
-    env = GridWorld(size=4)
+    env = GridWorld(size=4, verbose=True)  # Set verbose=True to see detailed output
     iterations = env.value_iteration()
     
     print(f"\nConverged after {iterations} iterations\n")
